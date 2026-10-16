@@ -1,0 +1,24 @@
+feature:
+    - title: '^feat(\([^)]+\))?:'
+
+fix:
+    - title: '^fix(\([^)]+\))?:'
+
+documentation:
+    - title: '^docs(\([^)]+\))?:'
+
+style:
+    - title: '^style(\([^)]+\))?:'
+
+refactor:
+    - title: '^refactor(\([^)]+\))?:'
+
+test:
+    - title: '^test(\([^)]+\))?:'
+
+chore:
+    - title: '^chore(\([^)]+\))?:'
+
+cicd:
+    - title: '^cicd(\([^)]+\))?:'
+    - title: '^ci(\([^)]+\))?:'
