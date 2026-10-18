@@ -1,0 +1,31 @@
+name: PR Title Convention Check
+
+on:
+    pull_request:
+        types: [opened, edited, reopened, synchronize]
+
+permissions:
+    pull-requests: read
+
+jobs:
+    check-title:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Validate PR title
+              run: |
+                  echo "PR title: '${{ github.event.pull_request.title }}'"
+
+                  REGEX="^(feat|fix|docs|style|refactor|test|chore|cicd)\([^)]+\): .+"
+
+                  if [[ ! "${{ github.event.pull_request.title }}" =~ $REGEX ]]; then
+                    echo "❌ PR title does NOT respect the convention."
+                    echo ""
+                    echo "Expected format:"
+                    echo "  <type>(<scope>): <description>"
+                    echo ""
+                    echo "Allowed types:"
+                    echo "  feat | fix | docs | style | refactor | test | chore | cicd"
+                    exit 1
+                  fi
+
+                  echo "✅ PR title is valid."

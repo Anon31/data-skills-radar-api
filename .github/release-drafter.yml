@@ -1,0 +1,81 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+
+# 1. Configuration des Catégories pour le Changelog
+categories:
+    - title: '🚀 Nouvelles Fonctionnalités'
+      labels:
+          - 'feature'
+    - title: '🐛 Corrections de Bugs'
+      labels:
+          - 'fix'
+    - title: '📚 Documentation'
+      labels:
+          - 'documentation'
+    - title: '🎨 Style & Formatage'
+      labels:
+          - 'style'
+    - title: '♻️ Refactoring'
+      labels:
+          - 'refactor'
+    - title: '🧪 Tests'
+      labels:
+          - 'test'
+    - title: '⚙️ Tâches Techniques'
+      labels:
+          - 'chore'
+    - title: '🏭 CI/CD & DevOps'
+      labels:
+          - 'cicd'
+
+# 2. Configuration de l'Autolabeler (Le "Traducteur")
+autolabeler:
+    - label: 'feature'
+      regex:
+          - '^feat(\(.*\))?:'
+          - '^feature(\(.*\))?:'
+    - label: 'fix'
+      regex:
+          - '^fix(\(.*\))?:'
+          - '^bug(\(.*\))?:'
+    - label: 'documentation'
+      regex:
+          - '^docs(\(.*\))?:'
+    - label: 'style'
+      regex:
+          - '^style(\(.*\))?:'
+    - label: 'refactor'
+      regex:
+          - '^refactor(\(.*\))?:'
+    - label: 'test'
+      regex:
+          - '^test(\(.*\))?:'
+    - label: 'chore'
+      regex:
+          - '^chore(\(.*\))?:'
+    - label: 'cicd'
+      regex:
+          - '^ci(\(.*\))?:'
+          - '^cicd(\(.*\))?:'
+
+# 3. Calcul automatique du numéro de version (SemVer)
+version-resolver:
+    major:
+        labels:
+            - 'major'
+    minor:
+        labels:
+            - 'feature'
+    patch:
+        labels:
+            - 'fix'
+            - 'chore'
+            - 'refactor'
+            - 'documentation'
+            - 'style'
+            - 'test'
+            - 'cicd'
+
+template: |
+    ## Modifications
+    $CHANGES
