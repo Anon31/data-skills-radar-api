@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: dsr-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: dsr_admin
+      POSTGRES_PASSWORD: dsr_password
+      POSTGRES_DB: data_skills_radar_db
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: dsr-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@dataskillsradar.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+
+  vault:
+    image: hashicorp/vault:latest
+    container_name: dsr-vault
+    restart: always
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: dsr_dev_vault_token
+    ports:
+      - "8200:8200"
+    cap_add:
+      - IPC_LOCK
