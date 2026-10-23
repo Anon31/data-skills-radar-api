@@ -1,0 +1,78 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+// ==========================================
+// ÉNUMÉRATIONS
+// ==========================================
+
+enum Role {
+    ADMIN
+    USER
+    VISITOR
+}
+
+enum NiveauImpactIA {
+    FORT
+    MOYEN
+    FAIBLE
+    INCONNU
+}
+
+enum CategorieCompetence {
+    TECHNIQUE
+    COMPORTEMENTALE
+    OUTIL
+    CERTIFICATION
+}
+
+enum TypeTache {
+    COGNITIVE_ROUTINIERE
+    COGNITIVE_COMPLEXE
+    MANUELLE_ROUTINIERE
+    MANUELLE_COMPLEXE
+}
+
+enum TendanceEmploi {
+    EN_CROISSANCE
+    EN_DECLIN
+    EN_MUTATION
+    STABLE
+}
+
+// ==========================================
+// MODÈLES DE DONNÉES
+// ==========================================
+
+model User {
+    id        String   @id @default(uuid()) @db.Uuid
+    firstname String
+    lastname  String
+    email     String   @unique
+    password  String
+    phone     String?
+    birthdate DateTime
+    enabled   Boolean  @default(true)
+    role      Role     @default(VISITOR)
+
+    address Address?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Address {
+    id         String  @id @default(uuid()) @db.Uuid
+    number     String?
+    street     String
+    city       String
+    postalCode String
+    country    String
+
+    userId String @unique @db.Uuid
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
