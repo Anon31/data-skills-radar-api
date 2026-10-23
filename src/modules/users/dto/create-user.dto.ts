@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, ValidateNested, IsDateString, IsEnum, IsOptional } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, ValidateNested, IsDate, IsEnum, IsOptional } from 'class-validator';
 import { CreateAddressDto } from '../../../shared/dto/create-address.dto.js';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
@@ -32,9 +32,10 @@ export class CreateUserDto {
     phone?: string;
 
     @ApiProperty({ example: '1979-02-15T00:00:00.000Z' })
-    @IsDateString({}, { message: 'Format de date de naissance invalide' })
+    @IsDate({ message: 'Format de date de naissance invalide' })
+    @Type(() => Date)
     @IsNotEmpty({ message: 'La date de naissance est obligatoire' })
-    birthdate: string;
+    birthdate: Date;
 
     @ApiProperty({ enum: Role, example: Role.ADMIN })
     @IsEnum(Role, { message: 'Le rôle doit être ADMIN, USER ou VISITOR' })
