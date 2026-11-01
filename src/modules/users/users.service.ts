@@ -22,7 +22,17 @@ export class UsersService {
                 birthdate: new Date(birthdate),
                 enabled: true,
                 role: role,
-                address: address ? { create: { ...address } } : undefined,
+                address: address
+                    ? {
+                          create: {
+                              number: address.number,
+                              street: address.street,
+                              city: address.city,
+                              postalCode: address.postalCode,
+                              country: address.country,
+                          },
+                      }
+                    : undefined,
             },
             include: { address: true },
         });
@@ -36,7 +46,10 @@ export class UsersService {
             include: { address: true },
             orderBy: { createdAt: 'desc' },
         });
-        return users.map(({ password: _, ...user }) => user);
+        return users.map((user) => {
+            const { password: _, ...rest } = user;
+            return rest;
+        });
     }
 
     async findOne(id: string) {
