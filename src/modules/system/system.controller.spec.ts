@@ -5,7 +5,6 @@ import { SystemService } from './system.service.js';
 
 describe('SystemController', () => {
     let controller: SystemController;
-    let service: SystemService;
 
     const mockSystemService = {
         getSystemStatus: vi.fn(),
@@ -19,7 +18,6 @@ describe('SystemController', () => {
         }).compile();
 
         controller = module.get<SystemController>(SystemController);
-        service = module.get<SystemService>(SystemService);
     });
 
     it('doit être défini', () => {
@@ -38,7 +36,7 @@ describe('SystemController', () => {
 
         const result = controller.getSystemStatus();
 
-        expect(service.getSystemStatus).toHaveBeenCalled();
+        expect(mockSystemService.getSystemStatus).toHaveBeenCalled();
         expect(result).toEqual(expectedStatus);
     });
 
@@ -52,7 +50,7 @@ describe('SystemController', () => {
 
         const result = controller.getReferenceData();
 
-        expect(service.getReferenceData).toHaveBeenCalled();
+        expect(mockSystemService.getReferenceData).toHaveBeenCalled();
         expect(result).toEqual(expectedData);
     });
 });

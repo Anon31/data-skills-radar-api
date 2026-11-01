@@ -13,8 +13,6 @@ vi.mock('bcrypt', () => ({
 
 describe('AuthService', () => {
     let service: AuthService;
-    let usersService: UsersService;
-    let jwtService: JwtService;
 
     const mockUsersService = {
         findByEmail: vi.fn(),
@@ -40,8 +38,6 @@ describe('AuthService', () => {
         }).compile();
 
         service = module.get<AuthService>(AuthService);
-        usersService = module.get<UsersService>(UsersService);
-        jwtService = module.get<JwtService>(JwtService);
     });
 
     afterEach(() => {
@@ -83,8 +79,8 @@ describe('AuthService', () => {
 
             const result = await service.login(loginDto);
 
-            expect(usersService.findByEmail).toHaveBeenCalledWith(loginDto.email);
-            expect(jwtService.signAsync).toHaveBeenCalledWith({
+            expect(mockUsersService.findByEmail).toHaveBeenCalledWith(loginDto.email);
+            expect(mockJwtService.signAsync).toHaveBeenCalledWith({
                 sub: mockUser.id,
                 email: mockUser.email,
                 role: mockUser.role,

@@ -6,8 +6,6 @@ import { AuthService } from './auth.service.js';
 
 describe('AuthController', () => {
     let controller: AuthController;
-    let authService: AuthService;
-    let usersService: UsersService;
 
     // Création des mocks pour les services injectés
     const mockAuthService = {
@@ -28,8 +26,6 @@ describe('AuthController', () => {
         }).compile();
 
         controller = module.get<AuthController>(AuthController);
-        authService = module.get<AuthService>(AuthService);
-        usersService = module.get<UsersService>(UsersService);
     });
 
     it('doit être défini', () => {
@@ -44,7 +40,7 @@ describe('AuthController', () => {
 
         const result = await controller.login(loginDto);
 
-        expect(authService.login).toHaveBeenCalledWith(loginDto);
+        expect(mockAuthService.login).toHaveBeenCalledWith(loginDto);
         expect(result).toEqual(expectedToken);
     });
 
@@ -62,7 +58,7 @@ describe('AuthController', () => {
         // @ts-ignore : Cast forcé pour simuler l'objet Request Express avec l'injection ICurrentUser
         const result = await controller.getProfile(req);
 
-        expect(usersService.findOne).toHaveBeenCalledWith('uuid-1234');
+        expect(mockUsersService.findOne).toHaveBeenCalledWith('uuid-1234');
         expect(result).toEqual(expectedUser);
     });
 });

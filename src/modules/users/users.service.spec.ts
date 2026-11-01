@@ -15,7 +15,6 @@ vi.mock('bcrypt', () => ({
 
 describe('UsersService', () => {
     let service: UsersService;
-    let prisma: PrismaService;
 
     const mockPrismaService = {
         user: {
@@ -46,7 +45,6 @@ describe('UsersService', () => {
         }).compile();
 
         service = module.get<UsersService>(UsersService);
-        prisma = module.get<PrismaService>(PrismaService);
     });
 
     afterEach(() => {
@@ -75,7 +73,7 @@ describe('UsersService', () => {
             const result = await service.create(dto);
 
             expect(bcrypt.hash).toHaveBeenCalledWith('rawPassword', 'salt');
-            expect(prisma.user.create).toHaveBeenCalledWith({
+            expect(mockPrismaService.user.create).toHaveBeenCalledWith({
                 data: {
                     firstname: 'John',
                     lastname: 'Doe',
@@ -99,7 +97,7 @@ describe('UsersService', () => {
 
             const result = await service.findAll();
 
-            expect(prisma.user.findMany).toHaveBeenCalled();
+            expect(mockPrismaService.user.findMany).toHaveBeenCalled();
             expect(result).toHaveLength(2);
             expect(result[0]).not.toHaveProperty('password');
         });
@@ -111,7 +109,7 @@ describe('UsersService', () => {
 
             const result = await service.findOne('uuid-1234');
 
-            expect(prisma.user.findUnique).toHaveBeenCalledWith({
+            expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
                 where: { id: 'uuid-1234' },
                 include: { address: true },
             });
@@ -130,12 +128,13 @@ describe('UsersService', () => {
         it("doit mettre à jour l'utilisateur avec la syntaxe relationnelle d'adresse", async () => {
             const updateDto: any = { firstname: 'Jane', address: { city: 'Toulouse' } };
             const updatedUser = { ...mockUser, firstname: 'Jane' };
+            const { password: _, ...expectedUser } = updatedUser;
 
             mockPrismaService.user.update.mockResolvedValue(updatedUser);
 
             const result = await service.update('uuid-1234', updateDto);
 
-            expect(prisma.user.update).toHaveBeenCalledWith({
+            expect(mockPrismaService.user.update).toHaveBeenCalledWith({
                 where: { id: 'uuid-1234' },
                 data: {
                     firstname: 'Jane',
@@ -143,7 +142,7 @@ describe('UsersService', () => {
                 },
                 include: { address: true },
             });
-            expect(result).toEqual(updatedUser);
+            expect(result).toEqual(expectedUser);
         });
     });
 
@@ -155,8 +154,8 @@ describe('UsersService', () => {
 
             await service.remove('uuid-1234');
 
-            expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { id: 'uuid-1234' }, include: { address: true } });
-            expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: 'uuid-1234' } });
+            expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({ where: { id: 'uuid-1234' }, include: { address: true } });
+            expect(mockPrismaService.user.delete).toHaveBeenCalledWith({ where: { id: 'uuid-1234' } });
         });
     });
 
@@ -185,7 +184,7 @@ describe('UsersService', () => {
             const result = await service.updatePassword('uuid-1234', passwordDto);
 
             expect(bcrypt.hash).toHaveBeenCalledWith('new', 'salt');
-            expect(prisma.user.update).toHaveBeenCalledWith({
+            expect(mockPrismaService.user.update).toHaveBeenCalledWith({
                 where: { id: 'uuid-1234' },
                 data: { password: 'newHashed' },
             });
