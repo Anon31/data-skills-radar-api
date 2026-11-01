@@ -1,11 +1,11 @@
-import { IsOptional, IsString, IsNotEmpty } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsNotEmpty } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateAddressDto {
-    @ApiPropertyOptional({ example: '15' })
+    @ApiProperty({ example: '15' })
     @IsString()
-    @IsOptional()
-    number?: string;
+    @IsNotEmpty({ message: 'Le numéro de voie est obligatoire' })
+    number: string;
 
     @ApiProperty({ example: 'Rue de la République' })
     @IsString()

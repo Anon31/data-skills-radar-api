@@ -66,8 +66,8 @@ model User {
 }
 
 model Address {
-    id         String  @id @default(uuid()) @db.Uuid
-    number     String?
+    id         String @id @default(uuid()) @db.Uuid
+    number     String
     street     String
     city       String
     postalCode String

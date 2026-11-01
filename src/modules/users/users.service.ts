@@ -55,24 +55,46 @@ export class UsersService {
     }
 
     async update(id: string, updateUserDto: UpdateUserDto) {
-        // Extraction de l'adresse du reste des données utilisateur
-        const { address, ...userData } = updateUserDto;
+        // Extraction de l'adresse et de la date de naissance du reste des données utilisateur
+        const { address, birthdate, ...userData } = updateUserDto;
 
         // Préparation de l'objet principal
         const dataToUpdate: any = { ...userData };
 
-        // Si une adresse partielle est présente, on utilise la syntaxe relationnelle de Prisma
-        if (address) {
-            dataToUpdate.address = {
-                update: address,
-            };
+        if (birthdate) {
+            dataToUpdate.birthdate = new Date(birthdate);
         }
 
-        return this.prisma.user.update({
+        // Si une adresse est présente, on utilise upsert (si complète) ou update (si partielle)
+        if (address) {
+            if (address.number && address.street && address.city && address.postalCode && address.country) {
+                dataToUpdate.address = {
+                    upsert: {
+                        create: {
+                            number: address.number,
+                            street: address.street,
+                            city: address.city,
+                            postalCode: address.postalCode,
+                            country: address.country,
+                        },
+                        update: address,
+                    },
+                };
+            } else {
+                dataToUpdate.address = {
+                    update: address,
+                };
+            }
+        }
+
+        const updatedUser = await this.prisma.user.update({
             where: { id },
             data: dataToUpdate,
-            include: { address: true }, // Pour récupérer l'adresse mise à jour dans la réponse
+            include: { address: true },
         });
+
+        const { password: _, ...result } = updatedUser;
+        return result;
     }
 
     async remove(id: string) {

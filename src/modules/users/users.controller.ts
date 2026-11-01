@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Request, Param, Delete, Patch, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Request, Param, Delete, Patch, UseGuards, ForbiddenException } from '@nestjs/common';
 import { ICurrentUser } from '../../shared/interfaces/current-user.interface.js';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../../core/decorators/roles.decorator.js';
@@ -39,9 +39,15 @@ export class UsersController {
     }
 
     @Patch(':id')
-    @Roles(Role.ADMIN)
+    @Roles(Role.ADMIN, Role.USER)
     @ApiOperation({ summary: "Mettre à jour le profil d'un utilisateur" })
-    update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    update(@Request() req: { user: ICurrentUser }, @Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+        if (req.user.role !== Role.ADMIN) {
+            if (req.user.userId !== id) {
+                throw new ForbiddenException('Vous ne pouvez modifier que votre propre profil.');
+            }
+            delete updateUserDto.role;
+        }
         return this.usersService.update(id, updateUserDto);
     }
 
