@@ -61,3 +61,10 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # Docker data volumes
 /.docker-data
 /postgres-data
+
+# --- INFRASTRUCTURE ET SECRETS LOCAUX ---
+# Empêche de versionner accidentellement mes compose de prod locaux ou mes clés Vault
+docker-compose.prod.yml
+docker-compose.staging.yml
+init-vault.sh
+vault/config/
