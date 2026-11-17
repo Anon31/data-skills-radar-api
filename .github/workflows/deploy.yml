@@ -13,77 +13,83 @@ jobs:
       contents: read
       packages: write
     steps:
-      -   uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      -   name: Set environment variables
-          run: |
-            echo "IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-            if [[ "${{ github.ref_name }}" == "master" ]]; then
-              echo "DOCKER_TAG=production" >> $GITHUB_ENV
-            else
-              echo "DOCKER_TAG=staging" >> $GITHUB_ENV
-            fi
+      - name: Set environment variables
+        run: |
+          echo "IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          if [[ "${{ github.ref_name }}" == "master" ]]; then
+            echo "DOCKER_TAG=production" >> $GITHUB_ENV
+          else
+            echo "DOCKER_TAG=staging" >> $GITHUB_ENV
+          fi
 
-      -   name: Setup Node.js
-          uses: actions/setup-node@v6
-          with:
-            node-version: '24'
-            cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
 
-      -   name: Install, Lint and Test API
-          run: |
-            npm ci
-            npx prisma generate
-            npm run lint
-            npm run test # Exécute les tests Vitest générés par NestJS
+      - name: Install, Lint and Test API
+        run: |
+          npm ci
+          npx prisma generate
+          npm run lint
+          npm run test
 
-      -   name: Log in to GHCR
-          if: github.event_name == 'push'
-          uses: docker/login-action@v4
-          with:
-            registry: ghcr.io
-            username: ${{ github.actor }}
-            password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      -   name: Build and push API image
-          if: github.event_name == 'push'
-          uses: docker/build-push-action@v7
-          with:
-            context: .
-            file: ./Dockerfile
-            push: true
-            tags: ghcr.io/${{ env.IMAGE_NAME }}-api:${{ env.DOCKER_TAG }}
+      - name: Build and push API image
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
 
-#    deploy:
-#        if: github.event_name == 'push'
-#        needs: build-and-push
-#        runs-on: ubuntu-24.04
-#        steps:
-#            -   name: Set environment variables (CD)
-#                run: |
-#                    echo "IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-#                    if [[ "${{ github.ref_name }}" == "master" ]]; then
-#                      echo "DOCKER_TAG=production" >> $GITHUB_ENV
-#                    else
-#                      echo "DOCKER_TAG=staging" >> $GITHUB_ENV
-#                    fi
-#
-#            -   name: Deploy to VPS via SSH
-#                uses: appleboy/ssh-action@master
-#                with:
-#                    host: ${{ secrets.VPS_HOST }}
-#                    username: ${{ secrets.VPS_USER }}
-#                    key: ${{ secrets.VPS_SSH_KEY }}
-#                    envs: IMAGE_NAME,DOCKER_TAG
-#                    script: |
-#                        cd ~/data-skills-radar || mkdir -p ~/data-skills-radar && cd ~/data-skills-radar
-#                        export TAG=${{ env.DOCKER_TAG }}
-#
-#                        if [[ "$TAG" == "production" ]]; then
-#                          export API_PORT=3000
-#                        else
-#                          export API_PORT=3001
-#                        fi
-#
-#                        IMAGE_NAME=${{ env.IMAGE_NAME }} TAG=$TAG docker compose --env-file .env.$TAG -p dsr-$TAG pull
-#                        IMAGE_NAME=${{ env.IMAGE_NAME }} TAG=$TAG API_PORT=$API_PORT docker compose --env-file .env.$TAG -p dsr-$TAG up -d
+  deploy:
+    if: github.event_name == 'push'
+    needs: build-and-push
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Set environment variables (CD)
+        run: |
+          echo "IMAGE_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          if [[ "${{ github.ref_name }}" == "master" ]]; then
+            echo "DOCKER_TAG=production" >> $GITHUB_ENV
+            echo "COMPOSE_FILE=docker-compose.prod.yml" >> $GITHUB_ENV
+          else
+            echo "DOCKER_TAG=staging" >> $GITHUB_ENV
+            echo "COMPOSE_FILE=docker-compose.staging.yml" >> $GITHUB_ENV
+          fi
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: IMAGE_NAME,DOCKER_TAG,COMPOSE_FILE
+          script: |
+            cd ~/data-skills-radar-api
+
+            # 1. Authentification au registre GHCR depuis le VPS
+            echo "${{ secrets.GITHUB_TOKEN }}" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # 2. Génération du fichier .env.<TAG> avec les accès Vault
+            echo "NODE_ENV=${DOCKER_TAG}" > .env.${DOCKER_TAG}
+            echo "VAULT_ADDR=http://dsr-vault:8200" >> .env.${DOCKER_TAG}
+            echo "ROLE_ID=${{ secrets.VAULT_ROLE_ID }}" >> .env.${DOCKER_TAG}
+            echo "SECRET_ID=${{ secrets.VAULT_SECRET_ID }}" >> .env.${DOCKER_TAG}
+
+            # 3. Téléchargement de la nouvelle image et redémarrage du conteneur
+            sudo IMAGE_NAME=${IMAGE_NAME} docker compose -f ${COMPOSE_FILE} pull
+            sudo IMAGE_NAME=${IMAGE_NAME} docker compose -f ${COMPOSE_FILE} up -d
